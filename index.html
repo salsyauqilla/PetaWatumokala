@@ -1157,7 +1157,7 @@
             {label: '<img src="legend/PolygonTrasePrimer_8.png" /> Polygon Trase Primer', layer: layer_PolygonTrasePrimer_8},]},
         {label: '<b>Kontur Part 7 owyeah</b>', collapsed: true, selectAllCheckbox: true, children: [
             {label: '<img src="legend/KonturPatah2_7.png" /> Kontur Patah2', layer: layer_KonturPatah2_7},
-            {label: '<img src="legend/TitikKonturkykAutoCAD_6.png" /> TitikKonturkykAutoCAD', layer: layer_TitikKonturkykAutoCAD_6},
+            {label: '<img src="legend/TitikKonturkykAutoCAD_6.png" /> Garis Elevasi', layer: layer_TitikKonturkykAutoCAD_6},
             {label: 'Kontur Luar Polygon', layer: layer_KonturLuarPolygon_5},
             {label: 'Kontur Polygon<br /><table><tr><td style="text-align: center;"><img src="legend/KonturPolygon_4_0.png" /></td><td></td></tr><tr><td style="text-align: center;"><img src="legend/KonturPolygon_4_MasukKriteria1.png" /></td><td>Masuk Kriteria</td></tr><tr><td style="text-align: center;"><img src="legend/KonturPolygon_4_TdkMasukKriteria2.png" /></td><td>Tdk Masuk Kriteria</td></tr></table>', layer: layer_KonturPolygon_4},]},
             {label: '<img src="legend/SungaiWatumokala_3.png" /> Sungai Watumokala', layer: layer_SungaiWatumokala_3},
@@ -1198,7 +1198,9 @@
                 feature: layer.feature,
                 variables: {}
             };
-            layer.bindTooltip((layer.feature.properties['ZZZ'] !== null?String('<div style="color: #323232; font-size: 10pt; font-family: \'Arial\', sans-serif;">' + layer.feature.properties['ZZZ']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_TitikKonturkykAutoCAD_6'});
+            var elevation = layer.feature.properties['ZZZ'];
+            var elevationFormatted = elevation !== null ? parseFloat(elevation).toFixed(2) : '';
+            layer.bindTooltip((elevationFormatted !== ''?String('<div style="color: #323232; font-size: 10pt; font-family: \'Arial\', sans-serif;">' + elevationFormatted) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_TitikKonturkykAutoCAD_6'});
             labels.push(layer);
             totalMarkers += 1;
               layer.added = true;
@@ -1221,7 +1223,7 @@
             {name: 'Kontur Patah2', layer: layer_KonturPatah2_7},
             {name: 'Kontur Polygon', layer: layer_KonturPolygon_4},
             {name: 'Kontur Luar', layer: layer_KonturLuarPolygon_5},
-            {name: 'Titik Kontur', layer: layer_TitikKonturkykAutoCAD_6},
+            {name: 'Garis Elevasi', layer: layer_TitikKonturkykAutoCAD_6},
             {name: 'Land Use', layer: layer_LandUse_0},
             {name: 'Potensi Sawah', layer: layer_PotensiSawahFixLuas2450an_1},
             {name: 'Polygon Trase Sekunder', layer: layer_PolygonTraseSekunder_9},
@@ -1270,14 +1272,28 @@
             opacityPercent.textContent = this.value;
             
             if (currentSelectedLayer) {
-                currentSelectedLayer.setStyle({opacity: opacity});
+                // Method 1: Try setOpacity (for some layer types)
+                if (currentSelectedLayer.setOpacity) {
+                    currentSelectedLayer.setOpacity(opacity);
+                }
+                
+                // Method 2: Set opacity for each individual layer
                 currentSelectedLayer.eachLayer(function(layer) {
+                    // For GeoJSON features (Polygon, LineString, etc)
+                    if (layer.setStyle) {
+                        layer.setStyle({ opacity: opacity, fillOpacity: opacity * 0.7 });
+                    }
+                    // For markers/circles
                     if (layer.setOpacity) {
                         layer.setOpacity(opacity);
-                    } else if (layer.setStyle) {
-                        layer.setStyle({opacity: opacity});
+                    }
+                    // For circle markers
+                    if (layer.options && layer.setStyle) {
+                        layer.setStyle({ opacity: opacity, fillOpacity: opacity * 0.7 });
                     }
                 });
+                
+                console.log('Opacity set to:', opacity, 'for layer:', currentSelectedLayer.options.layerName);
             }
         });
         
@@ -1343,27 +1359,7 @@
             }
         }
         
-        // Map click handler
-        map.on('click', function(e) {
-            console.log('Map clicked at:', e.latlng);
-            try {
-                var utm = convertToUTM(e.latlng.lat, e.latlng.lng);
-                console.log('UTM coordinates:', utm);
-                
-                if (coordsValue) {
-                    coordsValue.innerHTML = 'X: ' + utm.easting.toFixed(2) + ' m<br>Y: ' + utm.northing.toFixed(2) + ' m';
-                    coordsDisplay.classList.remove('hidden');
-                    
-                    // Auto-hide after 8 seconds
-                    setTimeout(function() {
-                        coordsDisplay.classList.add('hidden');
-                    }, 8000);
-                }
-            } catch(err) {
-                console.error('Click handler error:', err);
-            }
-        });
-        
+        // Coordinates display removed - conflicts with feature popups
         
         </script>        
     </body>
