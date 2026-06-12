@@ -1155,15 +1155,15 @@
             {label: '<img src="legend/PolygonTraseSekunder_9.png" /> Polygon Trase Sekunder', layer: layer_PolygonTraseSekunder_9},]},
         {label: '<b>Saluran Primer</b>', collapsed: true, selectAllCheckbox: true, children: [
             {label: '<img src="legend/PolygonTrasePrimer_8.png" /> Polygon Trase Primer', layer: layer_PolygonTrasePrimer_8},]},
-        {label: '<b>Kontur Part 7 owyeah</b>', collapsed: true, selectAllCheckbox: true, children: [
-            {label: '<img src="legend/KonturPatah2_7.png" /> Kontur Patah2', layer: layer_KonturPatah2_7},
-            {label: '<img src="legend/TitikKonturkykAutoCAD_6.png" /> Garis Elevasi', layer: layer_TitikKonturkykAutoCAD_6},
+        {label: '<b>Project Kontur 7th</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: '<img src="legend/KonturPatah2_7.png" /> Garis Elevasi', layer: layer_KonturPatah2_7},
+            {label: '<img src="legend/TitikKonturkykAutoCAD_6.png" /> Titik Elevasi', layer: layer_TitikKonturkykAutoCAD_6},
             {label: 'Kontur Luar Polygon', layer: layer_KonturLuarPolygon_5},
             {label: 'Kontur Polygon<br /><table><tr><td style="text-align: center;"><img src="legend/KonturPolygon_4_0.png" /></td><td></td></tr><tr><td style="text-align: center;"><img src="legend/KonturPolygon_4_MasukKriteria1.png" /></td><td>Masuk Kriteria</td></tr><tr><td style="text-align: center;"><img src="legend/KonturPolygon_4_TdkMasukKriteria2.png" /></td><td>Tdk Masuk Kriteria</td></tr></table>', layer: layer_KonturPolygon_4},]},
             {label: '<img src="legend/SungaiWatumokala_3.png" /> Sungai Watumokala', layer: layer_SungaiWatumokala_3},
             {label: '<img src="legend/SawahFixLuas583_2.png" /> Sawah Fix (Luas 583)', layer: layer_SawahFixLuas583_2},
             {label: '<img src="legend/PotensiSawahFixLuas2450an_1.png" /> Potensi Sawah Fix (Luas 2450an)', layer: layer_PotensiSawahFixLuas2450an_1},
-            {label: '<img src="legend/LandUse_0.png" /> Land-Use', layer: layer_LandUse_0},]
+            {label: '<img src="legend/LandUse_0.png" /> <i>Land-Use</i>', layer: layer_LandUse_0},]
         
         // Add Google Satellite to overlays
         overlaysTree.push({label: '🛰️ Google Satellite (Basemap)', layer: googleSat});
@@ -1220,10 +1220,10 @@
         
         // ===== OPACITY CONTROL =====
         var layersForOpacity = [
-            {name: 'Kontur Patah2', layer: layer_KonturPatah2_7},
+            {name: 'Garis Elevasi', layer: layer_KonturPatah2_7},
             {name: 'Kontur Polygon', layer: layer_KonturPolygon_4},
             {name: 'Kontur Luar', layer: layer_KonturLuarPolygon_5},
-            {name: 'Garis Elevasi', layer: layer_TitikKonturkykAutoCAD_6},
+            {name: 'Titik Elevasi', layer: layer_TitikKonturkykAutoCAD_6},
             {name: 'Land Use', layer: layer_LandUse_0},
             {name: 'Potensi Sawah', layer: layer_PotensiSawahFixLuas2450an_1},
             {name: 'Polygon Trase Sekunder', layer: layer_PolygonTraseSekunder_9},
