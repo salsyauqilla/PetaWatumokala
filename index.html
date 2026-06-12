@@ -18,11 +18,113 @@
             padding: 0;
             margin: 0;
         }
+        
+        /* Opacity Control */
+        .opacity-control {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-width: 220px;
+        }
+        
+        .opacity-control label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #333;
+        }
+        
+        .opacity-control select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .opacity-control input[type="range"] {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+        }
+        
+        .opacity-value {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        
+        /* Coordinates Display */
+        .coordinates-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 15px 25px;
+            border-radius: 6px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            z-index: 1000;
+            pointer-events: none;
+            min-width: 280px;
+            backdrop-filter: blur(4px);
+        }
+        
+        .coordinates-display.hidden {
+            display: none;
+        }
+        
+        .coordinates-display .instruction {
+            color: #999;
+            font-size: 12px;
+            font-style: italic;
+            margin-bottom: 5px;
+        }
+        
+        .coordinates-display .coords {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .coordinates-display .utm-zone {
+            font-size: 11px;
+            color: #999;
+            margin-top: 8px;
+        }
         </style>
         <title></title>
     </head>
     <body>
         <div id="map">
+            <!-- Opacity Control (bottom-left) -->
+            <div id="opacity-control" class="opacity-control leaflet-control" style="position: absolute; bottom: 20px; left: 20px; z-index: 800;">
+                <label>🎚️ Layer Opacity</label>
+                <select id="layer-select">
+                    <option value="">-- Select a layer --</option>
+                </select>
+                <input type="range" id="opacity-slider" min="0" max="100" value="100" style="display: none;">
+                <div class="opacity-value" style="display: none;">Opacity: <span id="opacity-percent">100</span>%</div>
+            </div>
+            
+            <!-- Coordinates Display (top-center) -->
+            <div id="coordinates-display" class="coordinates-display hidden">
+                <div class="instruction">📍 Click map to reveal coordinates</div>
+                <div class="coords" id="coords-value"></div>
+                <div class="utm-zone">UTM Zone 51S</div>
+            </div>
         </div>
         <script src="js/qgis2web_expressions.js"></script>
         <script src="js/leaflet.js"></script>
@@ -866,10 +968,10 @@
                 pane: 'pane_KonturPatah2_7',
                 opacity: 1,
                 color: 'rgba(89,0,214,1.0)',
-                dashArray: '5,3,1,3',
+                dashArray: '4,2.5,1,2.5',
                 lineCap: 'round',
                 lineJoin: 'round',
-                weight: 3.0,
+                weight: 1.2,
                 fillOpacity: 0,
                 interactive: true,
             }
@@ -1038,6 +1140,15 @@
         });
         bounds_group.addLayer(layer_PolygonUtama_10);
         map.addLayer(layer_PolygonUtama_10);
+        
+        // ===== ADD GOOGLE SATELLITE BASEMAP =====
+        var googleSat = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            attribution: '&copy; Google Maps',
+            maxZoom: 20,
+            maxNativeZoom: 19,
+            name: 'Google Satellite'
+        });
+        
         var overlaysTree = [
             {label: '<img src="legend/PolygonUtama_10.png" /> Polygon Utama', layer: layer_PolygonUtama_10},
         {label: '<b>Saluran Sekunder</b>', collapsed: true, selectAllCheckbox: true, children: [
@@ -1053,6 +1164,10 @@
             {label: '<img src="legend/SawahFixLuas583_2.png" /> Sawah Fix (Luas 583)', layer: layer_SawahFixLuas583_2},
             {label: '<img src="legend/PotensiSawahFixLuas2450an_1.png" /> Potensi Sawah Fix (Luas 2450an)', layer: layer_PotensiSawahFixLuas2450an_1},
             {label: '<img src="legend/LandUse_0.png" /> Land-Use', layer: layer_LandUse_0},]
+        
+        // Add Google Satellite to overlays
+        overlaysTree.push({label: '🛰️ Google Satellite (Basemap)', layer: googleSat});
+        
         var lay = L.control.layers.tree(null, overlaysTree,{
             //namedToggle: true,
             //selectorBack: false,
@@ -1100,6 +1215,132 @@
         map.on("layerremove", function(){
             resetLabels([layer_KonturPolygon_4,layer_KonturLuarPolygon_5,layer_TitikKonturkykAutoCAD_6]);
         });
+        
+        // ===== OPACITY CONTROL =====
+        var layersForOpacity = [
+            {name: 'Kontur Patah2', layer: layer_KonturPatah2_7},
+            {name: 'Kontur Polygon', layer: layer_KonturPolygon_4},
+            {name: 'Kontur Luar', layer: layer_KonturLuarPolygon_5},
+            {name: 'Titik Kontur', layer: layer_TitikKonturkykAutoCAD_6},
+            {name: 'Land Use', layer: layer_LandUse_0},
+            {name: 'Potensi Sawah', layer: layer_PotensiSawahFixLuas2450an_1},
+            {name: 'Polygon Trase Sekunder', layer: layer_PolygonTraseSekunder_9},
+            {name: 'Saluran Primer', layer: layer_SaluranPrimer_8},
+            {name: 'Polygon Utama', layer: layer_PolygonUtama_10},
+        ];
+        
+        var layerSelect = document.getElementById('layer-select');
+        var opacitySlider = document.getElementById('opacity-slider');
+        var opacityPercent = document.getElementById('opacity-percent');
+        var opacityValueDiv = opacitySlider.parentElement.querySelector('.opacity-value');
+        var currentSelectedLayer = null;
+        
+        // Populate layer dropdown
+        layersForOpacity.forEach(function(item) {
+            var option = document.createElement('option');
+            option.value = item.name;
+            option.textContent = item.name;
+            layerSelect.appendChild(option);
+        });
+        
+        // Handle layer selection
+        layerSelect.addEventListener('change', function() {
+            var layerName = this.value;
+            if (layerName) {
+                var layerItem = layersForOpacity.find(item => item.name === layerName);
+                currentSelectedLayer = layerItem.layer;
+                opacitySlider.style.display = 'block';
+                opacityValueDiv.style.display = 'block';
+                
+                // Get current opacity
+                var currentOpacity = currentSelectedLayer.getLayers()[0] ? 
+                    (currentSelectedLayer.getLayers()[0].options.opacity || 1) : 1;
+                opacitySlider.value = Math.round(currentOpacity * 100);
+                opacityPercent.textContent = opacitySlider.value;
+            } else {
+                opacitySlider.style.display = 'none';
+                opacityValueDiv.style.display = 'none';
+                currentSelectedLayer = null;
+            }
+        });
+        
+        // Handle opacity slider
+        opacitySlider.addEventListener('input', function() {
+            var opacity = this.value / 100;
+            opacityPercent.textContent = this.value;
+            
+            if (currentSelectedLayer) {
+                currentSelectedLayer.setStyle({opacity: opacity});
+                currentSelectedLayer.eachLayer(function(layer) {
+                    if (layer.setOpacity) {
+                        layer.setOpacity(opacity);
+                    } else if (layer.setStyle) {
+                        layer.setStyle({opacity: opacity});
+                    }
+                });
+            }
+        });
+        
+        // ===== COORDINATES DISPLAY =====
+        var coordsDisplay = document.getElementById('coordinates-display');
+        var coordsValue = document.getElementById('coords-value');
+        
+        function convertToUTM(lat, lon) {
+            // Simplified UTM conversion for Zone 51S
+            // This is a basic approximation
+            var k0 = 0.9996;
+            var lon0 = 123; // Central meridian for Zone 51
+            var falseEasting = 500000;
+            var falseNorthing = 10000000; // Southern hemisphere
+            
+            var PI = Math.PI;
+            var latRad = lat * PI / 180;
+            var lonRad = lon * PI / 180;
+            var lon0Rad = lon0 * PI / 180;
+            
+            var n = 1 / (2 * Math.sqrt(298.257223563) / (Math.sqrt(298.257223563) - 1));
+            var n2 = n * n;
+            var n3 = n2 * n;
+            var n5 = n3 * n2;
+            
+            var c2 = 3/2 * n - 27/32 * n3 + 269/512 * n5;
+            var c4 = 21/16 * n2 - 55/32 * n3;
+            var c6 = 151/96 * n3;
+            
+            var A = Math.cos(latRad) * ((lonRad - lon0Rad) % (2 * PI));
+            var A2 = A * A;
+            var A3 = A2 * A;
+            var A4 = A3 * A;
+            var A5 = A4 * A;
+            var A6 = A5 * A;
+            
+            var M = Math.sqrt(1 - 0.00669438 * Math.sin(latRad) * Math.sin(latRad));
+            var t = Math.tan(latRad) / M;
+            var t2 = t * t;
+            var t4 = t2 * t2;
+            
+            var easting = falseEasting + k0 * 6378137 * (A + A3/6 * (1 - t2 + n * Math.cos(latRad) * Math.cos(latRad)) + A5/120 * (1 - 5*t2 + t4 + 10*n*Math.cos(latRad)*Math.cos(latRad) - 4*n*n*Math.cos(latRad)*Math.cos(latRad) - n*Math.sin(latRad)*Math.sin(latRad)));
+            
+            var northing = falseNorthing + k0 * 6378137 * (Math.atan2(t, Math.cos(A)) - Math.atan2(0, 1) + c2 * A2 + c4 * A4 + c6 * A6);
+            
+            return {
+                easting: Math.round(easting * 100) / 100,
+                northing: Math.round(northing * 100) / 100,
+                zone: '51S'
+            };
+        }
+        
+        map.on('click', function(e) {
+            var utm = convertToUTM(e.latlng.lat, e.latlng.lng);
+            coordsValue.innerHTML = 'X: ' + utm.easting.toFixed(2) + ' m<br>Y: ' + utm.northing.toFixed(2) + ' m';
+            coordsDisplay.classList.remove('hidden');
+            
+            // Auto-hide after 8 seconds
+            setTimeout(function() {
+                coordsDisplay.classList.add('hidden');
+            }, 8000);
+        });
+        
         </script>        
     </body>
 </html>
